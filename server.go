@@ -49,6 +49,29 @@ func (ThisServer *Server) Broadcast(user *User, message string) {
 	ThisServer.BroadcastMassageQueue <- SendMessage
 }
 
+func (ThisServer *Server) MonitorUserMessages(user *User) {
+	for {
+		UserMessage := make([]byte, 4096)
+		n, err := user.Connect.Read(UserMessage)
+
+		if n == 0 { // 用户断开连接
+			fmt.Println(user.UserName, "断开连接")
+			ThisServer.Broadcast(user, user.UserName+"离开服务器")
+			ThisServer.MapLock.Lock()
+			delete(ThisServer.UserMap, user.UserName)
+			ThisServer.MapLock.Unlock()
+			user.Connect.Close()
+		}
+
+		if err != nil {
+			fmt.Println("Read err:", err)
+			continue
+		}
+		message := string(UserMessage[:n-1])
+		ThisServer.Broadcast(user, message)
+	}
+}
+
 func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 	// 处理业务
 	// fmt.Println("新连接...")
@@ -59,6 +82,8 @@ func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 	ThisServer.MapLock.Unlock()
 
 	ThisServer.Broadcast(UserValue, "欢迎来到服务器")
+
+	go ThisServer.MonitorUserMessages(UserValue)
 
 }
 
