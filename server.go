@@ -14,6 +14,7 @@ type Server struct {
 	BroadcastMassageQueue chan string      // Server 接受的的消息队列
 }
 
+// 创建服务器
 func NewServer(ip string, port int) *Server {
 
 	NewValue := &Server{
@@ -49,6 +50,7 @@ func (ThisServer *Server) Broadcast(user *User, message string) {
 	ThisServer.BroadcastMassageQueue <- SendMessage
 }
 
+// 监听用户的消息
 func (ThisServer *Server) MonitorUserMessages(user *User) {
 	for {
 		UserMessage := make([]byte, 4096)
@@ -56,11 +58,8 @@ func (ThisServer *Server) MonitorUserMessages(user *User) {
 
 		if n == 0 { // 用户断开连接
 			fmt.Println(user.UserName, "断开连接")
-			ThisServer.Broadcast(user, user.UserName+"离开服务器")
-			ThisServer.MapLock.Lock()
-			delete(ThisServer.UserMap, user.UserName)
-			ThisServer.MapLock.Unlock()
-			user.Connect.Close()
+			user.Offline() // 下线
+			return         // 退出循环防止无限打印
 		}
 
 		if err != nil {
@@ -68,20 +67,17 @@ func (ThisServer *Server) MonitorUserMessages(user *User) {
 			continue
 		}
 		message := string(UserMessage[:n-1])
-		ThisServer.Broadcast(user, message)
+		user.SendMessage(message)
 	}
 }
 
+// 业务处理
 func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 	// 处理业务
 	// fmt.Println("新连接...")
-	UserValue := NewUser(conn)
+	UserValue := NewUser(conn, ThisServer)
 
-	ThisServer.MapLock.Lock()
-	ThisServer.UserMap[UserValue.UserName] = UserValue
-	ThisServer.MapLock.Unlock()
-
-	ThisServer.Broadcast(UserValue, "欢迎来到服务器")
+	UserValue.GoOnline() // 上线
 
 	go ThisServer.MonitorUserMessages(UserValue)
 
