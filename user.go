@@ -54,7 +54,19 @@ func (ThisUser *User) Offline() {
 	ThisUser.Connect.Close()
 }
 
-// 发送消息
 func (ThisUser *User) SendMessage(message string) {
-	ThisUser.Server.Broadcast(ThisUser, message)
+	ThisUser.Connect.Write([]byte(message))
+}
+
+// 发送消息
+func (ThisUser *User) DoMessage(message string) {
+	if message == "who" {
+		ThisUser.Server.Broadcast(ThisUser, "当前在线用户：")
+		for UserName := range ThisUser.Server.UserMap {
+			UserMessage := fmt.Sprintf("[%v]%v 在线", UserName, ThisUser.Address)
+			ThisUser.SendMessage(UserMessage)
+		}
+	} else {
+		ThisUser.Server.Broadcast(ThisUser, message)
+	}
 }

@@ -67,7 +67,7 @@ func (ThisServer *Server) MonitorUserMessages(user *User) {
 			continue
 		}
 		message := string(UserMessage[:n-1])
-		user.SendMessage(message)
+		user.DoMessage(message)
 	}
 }
 
