@@ -88,7 +88,7 @@ func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 		select {
 		case <-TimeoutCondition:
 
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 600):
 			UserValue.SendNetworkMessage("超时下线")
 			close(UserValue.MessageQueue) //销毁资源
 			conn.Close()

@@ -73,8 +73,8 @@ func (ThisUser *User) SendNetworkMessage(message string) {
 func (ThisUser *User) DoMessage(message string) {
 	if message == "who" { // 查询
 		ThisUser.SendMessage("在线用户列表：")
-		for UserName := range ThisUser.Server.UserMap {
-			UserMessage := fmt.Sprintf("[%v]%v 在线", UserName, ThisUser.Address)
+		for UserName, UserAddress := range ThisUser.Server.UserMap {
+			UserMessage := fmt.Sprintf("[%v]%v 在线", UserName, UserAddress.Address)
 			ThisUser.SendMessage(UserMessage)
 		}
 	} else if len(message) > 7 && message[:7] == "rename|" { // 修改用户名
@@ -91,10 +91,10 @@ func (ThisUser *User) DoMessage(message string) {
 			ThisUser.SendMessage("用户名已更改为：" + NewUserName)
 		}
 	} else if len(message) > 4 && message[:4] == "to|" { // 私聊
-		TargetUserName := strings.Split(message, "|")[1]
-		TargetUser, ok := ThisUser.Server.UserMap[TargetUserName]
+		UserSplitData := strings.Split(message, "|")
+		TargetUser, ok := ThisUser.Server.UserMap[UserSplitData[1]]
 		if ok {
-			UserMassage := fmt.Sprintf("[%v]%v 对你说：%v", ThisUser.Address, ThisUser.UserName, message[4:])
+			UserMassage := fmt.Sprintf("[%v]%v 对你说：%v", ThisUser.Address, ThisUser.UserName, UserSplitData[2])
 			TargetUser.SendMessage(UserMassage)
 		} else {
 			ThisUser.SendMessage("目标用户不存在")
