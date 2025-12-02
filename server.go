@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -46,12 +47,12 @@ func (ThisServer *Server) BroadcastMassage(message string) {
 
 // Broadcast 广播用户消息
 func (ThisServer *Server) Broadcast(user *User, message string) {
-	SendMessage := fmt.Sprintf("[%v]%v:%v", user.UserName, user.Address, message)
+	SendMessage := fmt.Sprintf("[%v]%v:%v", user.Address, user.UserName, message)
 	ThisServer.BroadcastMassageQueue <- SendMessage
 }
 
 // MonitorUserMessages 监听用户的消息
-func (ThisServer *Server) MonitorUserMessages(user *User) {
+func (ThisServer *Server) MonitorUserMessages(user *User, Condition chan bool) {
 	for {
 		UserMessage := make([]byte, 4096)
 		n, err := user.Connect.Read(UserMessage)
@@ -68,6 +69,7 @@ func (ThisServer *Server) MonitorUserMessages(user *User) {
 		}
 		message := string(UserMessage[:n-1])
 		user.DoMessage(message)
+		Condition <- true
 	}
 }
 
@@ -76,11 +78,23 @@ func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 	// 处理业务
 	// fmt.Println("新连接...")
 	UserValue := NewUser(conn, ThisServer)
-
 	UserValue.GoOnline() // 上线
 
-	go ThisServer.MonitorUserMessages(UserValue)
+	TimeoutCondition := make(chan bool)
 
+	go ThisServer.MonitorUserMessages(UserValue, TimeoutCondition)
+
+	for {
+		select {
+		case <-TimeoutCondition:
+
+		case <-time.After(time.Second * 10):
+			UserValue.SendMessage("超时下线")
+			UserValue.Offline()
+			close(UserValue.MessageQueue) //销毁资源
+			conn.Close()
+		}
+	}
 }
 
 // Start 启动Server
