@@ -14,7 +14,7 @@ type Server struct {
 	BroadcastMassageQueue chan string      // Server 接受的的消息队列
 }
 
-// 创建服务器
+// NewServer 创建服务器
 func NewServer(ip string, port int) *Server {
 
 	NewValue := &Server{
@@ -27,7 +27,7 @@ func NewServer(ip string, port int) *Server {
 	return NewValue
 }
 
-// 监听发送给服务器的消息
+// ListenBroadcast 监听发送给服务器的消息
 func (ThisServer *Server) ListenBroadcast() {
 	for {
 		BroadcastMassage := <-ThisServer.BroadcastMassageQueue
@@ -35,7 +35,7 @@ func (ThisServer *Server) ListenBroadcast() {
 	}
 }
 
-// 向所有用户推送消息
+// BroadcastMassage 向所有用户推送消息
 func (ThisServer *Server) BroadcastMassage(message string) {
 	ThisServer.MapLock.Lock()
 	defer ThisServer.MapLock.Unlock()
@@ -44,13 +44,13 @@ func (ThisServer *Server) BroadcastMassage(message string) {
 	}
 }
 
-// 广播用户消息
+// Broadcast 广播用户消息
 func (ThisServer *Server) Broadcast(user *User, message string) {
 	SendMessage := fmt.Sprintf("[%v]%v:%v", user.UserName, user.Address, message)
 	ThisServer.BroadcastMassageQueue <- SendMessage
 }
 
-// 监听用户的消息
+// MonitorUserMessages 监听用户的消息
 func (ThisServer *Server) MonitorUserMessages(user *User) {
 	for {
 		UserMessage := make([]byte, 4096)
@@ -71,7 +71,7 @@ func (ThisServer *Server) MonitorUserMessages(user *User) {
 	}
 }
 
-// 业务处理
+// HandleBusiness 业务处理
 func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 	// 处理业务
 	// fmt.Println("新连接...")
@@ -83,10 +83,10 @@ func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 
 }
 
-// 启动Server
+// Start 启动Server
 func (ThisServer *Server) Start() {
 	// 拼接完整的IP地址
-	var address string = fmt.Sprintf("%s:%d", ThisServer.Ip, ThisServer.Port)
+	var address = fmt.Sprintf("%s:%d", ThisServer.Ip, ThisServer.Port)
 	// 监听端口
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
