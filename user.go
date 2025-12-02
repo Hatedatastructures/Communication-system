@@ -65,6 +65,10 @@ func (ThisUser *User) SendMessage(message string) {
 	ThisUser.MessageQueue <- message
 }
 
+func (ThisUser *User) SendNetworkMessage(message string) {
+	ThisUser.Connect.Write([]byte(message + "\n"))
+}
+
 // DoMessage 发送消息
 func (ThisUser *User) DoMessage(message string) {
 	if message == "who" { // 查询
