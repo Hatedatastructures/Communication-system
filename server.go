@@ -90,9 +90,9 @@ func (ThisServer *Server) HandleBusiness(conn net.Conn) {
 
 		case <-time.After(time.Second * 10):
 			UserValue.SendNetworkMessage("超时下线")
-			UserValue.Offline()
 			close(UserValue.MessageQueue) //销毁资源
 			conn.Close()
+			return
 		}
 	}
 }
