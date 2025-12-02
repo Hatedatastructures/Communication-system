@@ -90,6 +90,15 @@ func (ThisUser *User) DoMessage(message string) {
 			ThisUser.Server.MapLock.Unlock()
 			ThisUser.SendMessage("用户名已更改为：" + NewUserName)
 		}
+	} else if len(message) > 4 && message[:4] == "to|" { // 私聊
+		TargetUserName := strings.Split(message, "|")[1]
+		TargetUser, ok := ThisUser.Server.UserMap[TargetUserName]
+		if ok {
+			UserMassage := fmt.Sprintf("[%v]%v 对你说：%v", ThisUser.Address, ThisUser.UserName, message[4:])
+			TargetUser.SendMessage(UserMassage)
+		} else {
+			ThisUser.SendMessage("目标用户不存在")
+		}
 	} else {
 		ThisUser.Server.Broadcast(ThisUser, message)
 	}
